@@ -1,0 +1,9 @@
+---
+- hosts: tag_Name_M5_ag_server[0] 
+  gather_facts: no
+  module_defaults:
+   group/aws:
+    region: us-east-1
+  tasks:
+   - name: script
+     script: /home/ec2-user/ansible/scripts/initDb.sh mod5-db-id.cpni1ycia55k.us-east-1.rds.amazonaws.com      

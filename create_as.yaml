@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+   group/aws:
+    region: "us-east-1"
+  tasks:
+  - name: Get EC2 info
+    ec2_instance_info: 
+     filters:
+      tag:Name: Module5-as-server
+      instance-state-name: "running"
+    register: ec2_as
+  - name: Create auto scaling group
+    ec2_asg:
+     name: Module5-as
+     health_check_type: ELB
+     wait_for_instances: False
+     lt_check: yes
+     launch_template: 
+      version: '$Latest'
+      launch_template_id: "{{ launch_temp.latest_template.launch_template_id }}"
+     min_size: 2
+     max_size: 4
+     desired_capacity: 2
+     availability_zones: 
+      - "{{ public_subnet.subnet.availability_zone }}"
+     vpc_zone_identifier:
+      - "{{ public_subnet.subnet.id }}"
+     target_group_arns: "{{ lb_target_group.target_group_arn }}"
+     state: present
+

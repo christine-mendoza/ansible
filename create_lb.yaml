@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/aws:
+      region: "us-east-1"
+  tasks:
+   - name: Create target group
+     elb_target_group:
+      name: Module5-target-group-updated
+      protocol: tcp
+      port: 80
+      vpc_id: "{{vpc.vpc.id}}"
+      target_type: instance
+      state: present
+     register: lb_target_group
+   - name: Get Elastic IP
+     ec2_eip_info:
+      filters:
+       tag:Name: Module5 EIP
+     register: eip
+   - name: Create load balancer
+     elb_network_lb:
+      name: Module5-lb
+      subnet_mappings:
+       - SubnetId: "{{ public_subnet.subnet.id }}"
+         AllocationId: "{{ eip.addresses[0].allocation_id }}"
+      listeners:
+       - Protocol: TCP
+         Port: 80
+         DefaultActions:
+          - TargetGroupArn: "{{ lb_target_group.target_group_arn }}"
+            Type: forward
+       - Protocol: TLS
+         Port: 443
+         Certificates:
+          - CertificateArn: "arn:aws:acm:us-east-1:196007689115:certificate/ab87eba8-c341-4563-9150-bc62617d7247"
+         DefaultActions:
+          - TargetGroupArn: "{{ lb_target_group.target_group_arn }}"
+            Type: forward
+      state: present
+   - name: Create launch template
+     ec2_launch_template:
+      template_name: "Module5-launch-temp"
+      image_id: "ami-0022f774911c1d690"
+      key_name: CCMIFiles
+      instance_type: t2.micro
+      iam_instance_profile: image-gallery-role
+      network_interfaces:
+       - device_index: 0
+         associate_public_ip_address: yes
+         delete_on_termination: yes
+         description: M5_launch_temp
+         groups:
+          - "{{ dev_sg.group_id }}"
+          - "{{ postgres_tag_sg.group_id }}"
+      user_data: "{{ lookup('file', './scripts/ec2startup_base64.sh') }}"
+      tags:
+       Name: M5-ag-server
+      state: present
+     register: launch_temp

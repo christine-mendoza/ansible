@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+   group/aws:
+    region: us-east-1
+  tasks: 
+   - name: Create rds subnet
+     rds_subnet_group:
+      name: rds_private_subnet
+      description: "rds private subnet group"
+      subnets: 
+       - "{{ private_subnet_1.subnet.id }}"
+       - "{{ private_subnet_2.subnet.id }}"
+      state: present
+     register: rds_sn_group
+   - name: Create database
+     rds_instance:
+       db_subnet_group_name: "{{ rds_sn_group.subnet_group.db_subnet_group_name }}"
+       engine: postgres
+       multi_az: yes
+       db_instance_identifier: mod5-db-id
+       instance_type: db.t3.micro
+       allocated_storage: 10
+       db_name: mod5ig
+       vpc_security_group_ids:
+        - "{{ postgres_sg.group_id }}"
+       master_user_password: "mod5igpassword"
+       master_username: "postgres"
+       port: 5432
+       tags:
+         Name: mod5_ig_database
+       state: present
+     register: rds_db
+

@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+   ami_id: "ami-0cff7528ff583bf9a"
+  module_defaults:
+  group/aws:
+   regions: "us-east-1"
+  tasks:
+   - name: Provision Developer EC2 instance
+     ec2:
+     key_name: auburn.cc
+     group: ""
+     instance_type: t2.micro
+     image: "{{ ami_id }}"
+     instance_tags:
+      Name: Module5 Dev
+      Module: 5
+     wait: yes
+     vpc_subnet_id: "{{ public_subnet.subnet.id }}"
+     assign_public_ip: yes
+     exact_count: 1
+     count_tag:
+      Name: Module5 Dev
+      user_data: "{{ lookup('file', 'scripts/ec2startup.sh'}}"
