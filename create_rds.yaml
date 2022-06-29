@@ -31,5 +31,5 @@
        tags:
          Name: mod5_ig_database
        state: present
-     register: rds_db
+     register: my_rds_db
 

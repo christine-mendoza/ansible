@@ -5,5 +5,12 @@
    group/aws:
     region: us-east-1
   tasks:
-   - name: script
-     script: /home/ec2-user/ansible/scripts/initDb.sh mod5-db-id.cpni1ycia55k.us-east-1.rds.amazonaws.com      
+   - name: get rds info
+     rds_instance_facts: 
+      db_instance_identifier: mod5-db-id
+     register: db_instance_id
+   - name: Run rds script
+     ansible.builtin.command:
+      argv:
+       - ./scripts/initDb.sh
+       - hostvars['localhost'][my_rds_db.endpoint.address]

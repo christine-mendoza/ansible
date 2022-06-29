@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+   group/aws:
+    region: us-east-1
+  tasks:
+   - name: Load db
+     rds_snapshot:
+      db_instance_identifier: mod5-db-id
+      db_snapshot_identifier: mod5-db-id-final-snapshot
